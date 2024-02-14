@@ -8,8 +8,8 @@ int main()
 	std::vector<int> tmp;
 
 
-    tmp.insert(tmp.end(), a.begin(), a.end());
-    tmp.insert(tmp.end(), b.begin(), b.end());
+    	tmp.insert(tmp.end(), a.begin(), a.end());
+    	tmp.insert(tmp.end(), b.begin(), b.end());
 
 	for(auto& item : tmp){
 		std::cout<< item <<" ";
