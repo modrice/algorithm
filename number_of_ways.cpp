@@ -3,153 +3,103 @@
  * 
  * 
 */
-
 #include <iostream>
 #include <vector>
-#include <array>
+#include <limits>
+#include <unordered_map>
 using namespace std;
+
 class Solution {
 public:
     int dest;
     unsigned long min;
     int cnt;
-    std::vector<bool> vec;
-    //std::array<std::array<std::pair<unsigned long,int>, 200>, 200> dp;
+    vector<bool> vec;
+    unordered_map<int, pair<unsigned long, int>> dp; // Using unordered_map for dp table
 
-    unsigned long dp[200] = {0, };
-    int ways[200] = {0, };
-
-
-    void go(vector<vector<int>>& roads, int to, unsigned long time, std::vector<bool>& v){
-        // if(time < dp[dest]){
-        //     dp[dest] = time;
-        //     return;
-        // }
-        if(dp[dest]!=0 && dp[dest] < time){
+    void go(vector<vector<int>>& roads, int to, unsigned long time, vector<bool>& v){
+        if(dp.find(dest) != dp.end() && dp[dest].first < time){
             return;
         }
         if(time > min){
-            //std::cout<<"ignore: "<< time <<" > "<< min <<std::endl;
             return;
         }
         if(to == dest){
-            //std::cout<<"arrived: "<< time<<std::endl;
-            //vec.push_back(time);
             if(min > time){
                 min = time;
                 cnt = 1;
             }
-            if(min == time){
-                //std::cout<<"count: "<< cnt <<std::endl;
+            else if(min == time){
                 ++cnt;
             }
             return;
         }
-        //int num=0;
-        // for(auto element: v){  
-        //     std::cout<<num++ <<": "<<element<<" ";
-        // }
-        // std::cout<<std::endl;
-
         for(auto& item: roads){
-            // if(time+item[2]> min){
-            //     return;
-            // }
-            int tmp =time + item[2];
-            //std::cout<< tmp <<", "<< min <<std::endl;
-            if(item[1] == to && v[item[0]]== false){// && item[2] != 0){
-                //std::cout<< item[1] <<" -> "<<item[0]<<": "<<item[2]<<std::endl;
-                
-                int t = dp[item[0]] ;
-                int way = ways[item[1]];
+            int tmp = time + item[2];
+            if(item[1] == to && !v[item[0]]){
+                int t = dp[item[0]].first;
+                int way = dp[item[0]].second;
 
-                //std::cout<< "dp: " << t << " acc_time: " << tmp <<std::endl;
-
-                if(t==0){
-                    ways[item[0]] = way;
-                    dp[item[0]] = tmp;
-                }else if(t== tmp){
-                    ways[item[0]]++;
-
-                }else if(t > tmp){
-                    ways[item[0]] = way;
-                    dp[item[0]] = tmp;
-                }else{
-                    continue;
-                    //std::cout<<"reached"<<std::endl;
-                    //return; 
+                if(t == 0){
+                    dp[item[0]] = {time + item[2], 1};
                 }
-                v[item[0]]=true;
-                go(roads,item[0], time+item[2], v);
-                v[item[0]]=false;
-
+                else if(t == tmp){
+                    dp[item[0]].second++;
+                }
+                else if(t > tmp){
+                    dp[item[0]] = {time + item[2], way};
+                }
+                else{
+                    continue;
+                }
+                v[item[0]] = true;
+                go(roads, item[0], time + item[2], v);
+                v[item[0]] = false;
             }
-            else if(item[0] == to && v[item[1]]== false){//&& item[2] != 0){
-                
-                
-                //std::cout<< item[0] <<" ~> "<<item[1]<<": "<<item[2]<<std::endl;
-                
-                int t = dp[item[1]] ;
-                int way = ways[item[0]];
-                
-                //std::cout<< "dp: " << t << " acc_time: " << tmp <<std::endl;
-                if(t==0){
-                    dp[item[1]] = tmp;
-                    ways[item[1]] = way;
-                }else if(t == tmp){
-                    ways[item[1]]++;
-                }else if(t > tmp ){
-                    ways[item[1]] = way;
-                    dp[item[1]] = tmp;
-                }else{
-                    continue;
-                    //std::cout<<"reached"<<std::endl;
-                    //return;                    
+            else if(item[0] == to && !v[item[1]]){
+                int t = dp[item[1]].first;
+                int way = dp[item[1]].second;
 
+                if(t == 0){
+                    dp[item[1]] = {time + item[2], 1};
                 }
-                v[item[1]]=true;
-                go(roads,item[1], time+item[2],v);
-                v[item[1]]=false;
-            }          
+                else if(t == tmp){
+                    dp[item[1]].second++;
+                }
+                else if(t > tmp){
+                    dp[item[1]] = {time + item[2], way};
+                }
+                else{
+                    continue;
+                }
+                v[item[1]] = true;
+                go(roads, item[1], time + item[2], v);
+                v[item[1]] = false;
+            }
         }
     }
 
     int countPaths(int n, vector<vector<int>>& roads) {
-        //unsigned long time =0;  
-
-        vec.resize(n,false);
-        cnt =0;
-        min = 1000000000;
-        dest = n-1;
-        vec[0]= true;
+        vec.resize(n, false);
+        cnt = 0;
+        min = numeric_limits<unsigned long>::max();
+        dest = n - 1;
+        vec[0] = true;
         for(auto& item: roads){
-            if(item[0]==0){
-                //std::cout<<item[1]<<std::endl;
-                //int tmp = item[2];
-                //item[2]= 0;
-                dp[item[1]] = item[2];
-                ways[item[1]] = 1;
-                vec[item[1]] =true;
+            if(item[0] == 0){
+                dp[item[1]] = {static_cast<unsigned long>(item[2]), 1};
+                vec[item[1]] = true;
                 go(roads, item[1], item[2], vec);
-                vec[item[1]] =false;
-
-                //item[2]=tmp;
+                vec[item[1]] = false;
             }
-            else if(item[1]==0){
-                // int tmp = item[2];
-                // item[2]= 0;   
-                dp[item[0]] = item[2];
-                ways[item[0]] = 1;
-                vec[item[0]] =true;
-                go(roads, item[0], item[2],vec);
-                vec[item[0]] =false;
-                //item[2]=tmp;
+            else if(item[1] == 0){
+                dp[item[0]] = {static_cast<unsigned long>(item[2]), 1};
+                vec[item[0]] = true;
+                go(roads, item[0], item[2], vec);
+                vec[item[0]] = false;
             }
         }
-        //for(int i=0 ;i<= dest; i++)
-            //std::cout<<"dp "<<dp[i] <<" num_way: "<< ways[i] <<" "<<std::endl;
-        //std::cout<<std::endl;
-        return cnt-1;//
+        return cnt;
     }
 };
 /**
